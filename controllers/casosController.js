@@ -1,5 +1,5 @@
 import {v4 as uuidv4} from 'uuid';
-import { casos } from '../repositories/casosRepository.js'
+import { casos, findById, deleteById, save, findAll } from '../repositories/casosRepository.js'
 
 export const criarCaso = (req, res) => {
     const caso = req.body;
@@ -10,20 +10,19 @@ export const criarCaso = (req, res) => {
     if(!(req.body.status === 'aberto' || req.body.status === 'solucionado')) {
         res.status(400).send('Status inválido. Use aberto ou solucionado.');
     }
-
-    const casoId = uuidv4();
-    const casoComId = {...caso, id: casoId}
-    casos.push(casoComId);
-    res.status(201).json(casoComId);
+    else{
+        const casoComId = save(uuidv4(), caso);
+        res.status(201).json(casoComId);
+    }
 }
 
 export const acharCaso = (req, res) => {
-    res.status(200).send(casos);
+    res.status(200).send(findAll());
 }
 
 export const acharCasoPorId = (req, res) => {
     const { id } = req.params; 
-    const casoProcurado = casos.find((caso) => caso.id == id);
+    const casoProcurado = findById(id);
     if(!casoProcurado) {
         res.status(404).send(`Caso com id:${id} não encontrado.`);
     }
@@ -32,9 +31,9 @@ export const acharCasoPorId = (req, res) => {
 
 export const deletarCaso = (req, res) => {
     const { id } = req.params; 
-    const tam = casos.length;
-    casos = casos.filter((caso) =>(caso.id != id));
-    if(casos.length == tam) {
+    const index = deleteById(id);
+
+    if(index == -1) {
         res.status(404).send(`Caso com id:${id} não encontrado.`);
     }
     res.status(204).send(`Caso com id:${id} deletado.`);
@@ -52,19 +51,16 @@ export const atualizarTodosOsAtributosDoCaso = (req, res) => {
         return res.status(400).send("Status inválido. Use 'aberto' ou 'solucionado'.");
     }
 
-    const index = casos.findIndex((caso) => caso.id == id);
+    const caso = findById(id);
 
-    if (index == -1) {
+    if (!caso) {
         return res.status(404).send(`Caso com id:${id} não encontrado.`);
     }
 
-    casos[index] = {
-        id, 
-        titulo,
-        descricao,
-        status,
-        agente_id
-    };
+    caso.titulo = titulo;
+    caso.descricao = descricao;
+    caso.status = status;
+    caso.agente_id = agente_id;
 
     res.status(200).send(`Caso com id ${id} foi atualizado com sucesso.`);
 }
@@ -73,7 +69,7 @@ export const atualizarAtributosDoCaso = (req, res) => {
     const { id } = req.params;
     const { titulo, descricao, status, agente_id } = req.body;
 
-    const caso = casos.find((caso) => caso.id === id);
+    const caso = findById(id);
 
     if (!caso) {
         res.status(404).send(`Caso com id:${id} não encontrado.`);
