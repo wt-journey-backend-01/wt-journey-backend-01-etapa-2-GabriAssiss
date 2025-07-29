@@ -1,4 +1,5 @@
 import casosRouter from './routes/casosRoutes.js';
+import agentesRouter from './routes/agentesRoutes.js';
 import express from 'express';
 
 const app = express();
@@ -11,3 +12,5 @@ app.listen(PORT, () => {
 });
 
 app.use('/casos', casosRouter);
+
+app.use('/agentes', agentesRouter);

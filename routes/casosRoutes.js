@@ -4,8 +4,6 @@ import { criarCaso, acharCaso, acharCasoPorId, atualizarAtributosDoCaso, atualiz
 
 const router = express.Router();
 
-let casos = [];
-
 router.post('/', criarCaso);
 
 router.get('/', acharCaso);

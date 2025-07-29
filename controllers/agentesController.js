@@ -1,0 +1,75 @@
+import {v4 as uuidv4} from 'uuid';
+import { findById, deleteById, save, findAll } from '../repositories/agentesRepository.js'
+
+export const criarAgente = (req, res) => {
+    const agente = req.body;
+    if(!req.body.nome || !req.body.dataDeIncorporacao || !req.body.cargo) {
+        res.status(400).send('Dados inválidos.');
+    }
+    else{
+        const AgenteComId = save(uuidv4(), agente);
+        res.status(201).json(AgenteComId);
+    }
+}
+
+export const acharAgente = (req, res) => {
+    res.status(200).send(findAll());
+}
+
+export const acharAgentePorId = (req, res) => {
+    const { id } = req.params; 
+    const agenteProcurado = findById(id);
+    if(!agenteProcurado) {
+        res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+    res.send(agenteProcurado);
+}
+
+export const deletarAgente = (req, res) => {
+    const { id } = req.params; 
+    const index = deleteById(id);
+
+    if(index == -1) {
+        res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+    res.status(204).send(`Agente com id:${id} deletado.`);
+}
+
+export const atualizarTodosOsAtributosDoAgente = (req, res) => {
+    const { id } = req.params;
+    const { nome, dataDeIncorporacao, cargo } = req.body;
+
+    if (!nome || !dataDeIncorporacao || !cargo) {
+        return res.status(400).send("Todos os campos (nome, data de Incorporação, cargo) são obrigatórios.");
+    }
+
+
+    const agente = findById(id);
+
+    if (!agente) {
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+
+    agente.nome = nome;
+    agente.dataDeIncorporacao = dataDeIncorporacao;
+    agente.cargo = cargo;
+
+    res.status(200).send(`Agente com id ${id} foi atualizado com sucesso.`);
+}
+
+export const atualizarAtributosDoAgente = (req, res) => {
+    const { id } = req.params;
+    const { nome, dataDeIncorporacao, cargo } = req.body;
+
+    const agente = findById(id);
+
+    if (!agente) {
+        res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+
+    if (nome) {agente.nome = nome;}
+    if (dataDeIncorporacao) {agente.dataDeIncorporacao = dataDeIncorporacao;}
+    if (cargo) {agente.cargo = cargo;}
+
+    res.send(`Agente com o id ${id} foi atualizado.`);
+}
