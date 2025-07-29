@@ -1,5 +1,5 @@
 import {v4 as uuidv4} from 'uuid';
-import { casos, findById, deleteById, save, findAll } from '../repositories/casosRepository.js'
+import {  findById, deleteById, save, findAll } from '../repositories/casosRepository.js'
 
 export const criarCaso = (req, res) => {
     const caso = req.body;
