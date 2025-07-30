@@ -53,7 +53,7 @@ export const atualizarTodosOsAtributosDoAgente = (req, res) => {
         return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
-    if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
+    if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
         return res.status(400).send("Data de incorporação inválida ou no futuro.");
     }
 
@@ -74,7 +74,7 @@ export const atualizarAtributosDoAgente = (req, res) => {
         return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
-    if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
+    if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
         return res.status(400).send("Data de incorporação inválida ou no futuro.");
     }
 

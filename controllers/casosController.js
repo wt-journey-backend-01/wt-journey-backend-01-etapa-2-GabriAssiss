@@ -57,6 +57,14 @@ export const atualizarTodosOsAtributosDoCaso = (req, res) => {
         return res.status(400).send("Status inválido. Use 'aberto' ou 'solucionado'.");
     }
 
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do caso.");
+    }
+    
+    if(!findAgenteById(req.body.agente_id)) {
+        return res.status(400).send('Id do agente inválido.');
+    }
+
     const casoAtualizado = updateById(id,  { titulo, descricao, status, agente_id });
     
     if (!casoAtualizado) {
@@ -70,9 +78,17 @@ export const atualizarAtributosDoCaso = (req, res) => {
     const { id } = req.params;
     const { titulo, descricao, status, agente_id } = req.body;
 
-    if(!(status === 'aberto' || status === 'solucionado')) {
+    if(status && !(status === 'aberto' || status === 'solucionado')) {
         return res.status(400).send('Status inválido. Use aberto ou solucionado.');
     }
+
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do caso.");
+    }
+
+    if(!findAgenteById(req.body.agente_id)) {
+        return res.status(400).send('Id do agente inválido.');
+    }   
     
     const casoAtualizado = updateById(id,  { titulo, descricao, status, agente_id });
     
