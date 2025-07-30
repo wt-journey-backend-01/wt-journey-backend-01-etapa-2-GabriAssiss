@@ -1,7 +1,7 @@
 import casosRouter from './routes/casosRoutes.js';
 import agentesRouter from './routes/agentesRoutes.js';
 import express from 'express';
-import { swaggerDocs } from './swagger.js';
+import { swaggerDocs } from './docs/swagger.js';
 
 const app = express();
 const PORT = 3000;
