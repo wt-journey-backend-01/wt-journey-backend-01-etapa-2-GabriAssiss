@@ -22,3 +22,10 @@ export const deleteById = (id) => {
 export const findAll = () => {
     return casos;
 }
+
+export const updateById = (id, newData) => {
+    const index = casos.findIndex(caso => caso.id === id);
+    if (index === -1) return null;
+    casos[index] = { ...casos[index], ...newData };
+    return casos[index];
+};

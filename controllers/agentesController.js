@@ -1,5 +1,6 @@
 import {v4 as uuidv4} from 'uuid';
-import { findById, deleteById, save, findAll } from '../repositories/agentesRepository.js'
+import { findById, deleteById, save, findAll, updateById } from '../repositories/agentesRepository.js'
+import {isValidDate, isFutureDate} from '../utils/errorHandler.js'
 
 export const criarAgente = (req, res) => {
     const agente = req.body;
@@ -11,7 +12,8 @@ export const criarAgente = (req, res) => {
         return res.status(400).send("Data de incorporação inválida ou no futuro.");
     }
 
-    const AgenteComId = save(uuidv4(), agente);
+    const id = uuidv4();
+    const AgenteComId = save(id, agente);
     res.status(201).json(AgenteComId);
     
 }
@@ -36,7 +38,7 @@ export const deletarAgente = (req, res) => {
     if(index == -1) {
         return res.status(404).send(`Agente com id:${id} não encontrado.`);
     }
-    res.status(204);
+    res.status(204).end();
 }
 
 export const atualizarTodosOsAtributosDoAgente = (req, res) => {
@@ -47,40 +49,40 @@ export const atualizarTodosOsAtributosDoAgente = (req, res) => {
         return res.status(400).send("Todos os campos (nome, data de Incorporação, cargo) são obrigatórios.");
     }
 
-
-    const agente = findById(id);
-
-    if (!agente) {
-        return res.status(404).send(`Agente com id:${id} não encontrado.`);
-    }
-
     if (req.body.id) {
         return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
-    agente.nome = nome;
-    agente.dataDeIncorporacao = dataDeIncorporacao;
-    agente.cargo = cargo;
+    if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
+        return res.status(400).send("Data de incorporação inválida ou no futuro.");
+    }
 
-    res.status(200).send(`Agente com id ${id} foi atualizado com sucesso.`);
+    const updatedAgente = updateById(id,  {nome, dataDeIncorporacao, cargo});
+
+    if (!updatedAgente) {
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+
+    res.status(200).json(updatedAgente);
 }
 
 export const atualizarAtributosDoAgente = (req, res) => {
     const { id } = req.params;
     const { nome, dataDeIncorporacao, cargo } = req.body;
 
-    const agente = findById(id);
-
-    if (!agente) {
-        return res.status(404).send(`Agente com id:${id} não encontrado.`);
-    }
     if (req.body.id) {
         return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
-    if (nome) {agente.nome = nome;}
-    if (dataDeIncorporacao) {agente.dataDeIncorporacao = dataDeIncorporacao;}
-    if (cargo) {agente.cargo = cargo;}
+    if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
+        return res.status(400).send("Data de incorporação inválida ou no futuro.");
+    }
 
-    res.send(`Agente com o id ${id} foi atualizado.`);
+    const updatedAgente = updateById(id,  {nome, dataDeIncorporacao, cargo});
+    
+    if (!updatedAgente) {
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+
+    res.status(200).json(updatedAgente);
 }

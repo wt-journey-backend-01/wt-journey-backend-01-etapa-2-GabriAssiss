@@ -22,3 +22,10 @@ export const deleteById = (id) => {
 export const findAll = () => {
     return agentes;
 }
+
+export const updateById = (id, newData) => {
+    const index = agentes.findIndex(agente => agente.id === id);
+    if (index === -1) return null;
+    agentes[index] = { ...agentes[index], ...newData };
+    return agentes[index];
+};
