@@ -87,7 +87,7 @@ export const atualizarAtributosDoAgente = (req, res) => {
         return res.status(400).send("Nenhum campo válido para atualizar foi enviado.");
     }
 
-    const updatedAgente = updateById(id,  {nome, dataDeIncorporacao, cargo});
+    const updatedAgente = updateById(id, dadosParaAtualizar);
     
     if (!updatedAgente) {
         return res.status(404).send(`Agente com id:${id} não encontrado.`);

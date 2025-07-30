@@ -9,7 +9,7 @@ export const criarCaso = (req, res) => {
     }
 
     if(!findAgenteById(req.body.agente_id)) {
-        return res.status(400).send('Id do agente inválido.');
+        return res.status(404).send('Id do agente inválido.');
     }
 
     if(!(req.body.status === 'aberto' || req.body.status === 'solucionado')) {
@@ -61,8 +61,8 @@ export const atualizarTodosOsAtributosDoCaso = (req, res) => {
         return res.status(400).send("Não é permitido alterar o ID do caso.");
     }
     
-    if(!findAgenteById(req.body.agente_id)) {
-        return res.status(400).send('Id do agente inválido.');
+    if(!findAgenteById(agente_id)) {
+        return res.status(404).send('Id do agente inválido.');
     }
 
     const casoAtualizado = updateById(id,  { titulo, descricao, status, agente_id });
@@ -87,7 +87,7 @@ export const atualizarAtributosDoCaso = (req, res) => {
     }
 
     if (agente_id !== undefined && !findAgenteById(agente_id)) {
-        return res.status(400).send('Id do agente inválido.');
+        return res.status(404).send('Id do agente inválido.');
     }   
 
     const dadosParaAtualizar = {};
