@@ -108,4 +108,3 @@ export const atualizarAtributosDoCaso = (req, res) => {
 
     res.status(200).json(casoAtualizado);
 }
-```
