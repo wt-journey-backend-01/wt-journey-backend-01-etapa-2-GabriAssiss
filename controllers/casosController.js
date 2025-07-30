@@ -78,19 +78,29 @@ export const atualizarAtributosDoCaso = (req, res) => {
     const { id } = req.params;
     const { titulo, descricao, status, agente_id } = req.body;
 
-    if(status && !(status === 'aberto' || status === 'solucionado')) {
-        return res.status(400).send('Status inválido. Use aberto ou solucionado.');
-    }
-
     if (req.body.id) {
         return res.status(400).send("Não é permitido alterar o ID do caso.");
     }
 
-    if(!findAgenteById(req.body.agente_id)) {
+    if (status !== undefined && !(status === 'aberto' || status === 'solucionado')) {
+        return res.status(400).send('Status inválido. Use aberto ou solucionado.');
+    }
+
+    if (agente_id !== undefined && !findAgenteById(agente_id)) {
         return res.status(400).send('Id do agente inválido.');
     }   
-    
-    const casoAtualizado = updateById(id,  { titulo, descricao, status, agente_id });
+
+    const dadosParaAtualizar = {};
+    if (titulo !== undefined) dadosParaAtualizar.titulo = titulo;
+    if (descricao !== undefined) dadosParaAtualizar.descricao = descricao;
+    if (status !== undefined) dadosParaAtualizar.status = status;
+    if (agente_id !== undefined) dadosParaAtualizar.agente_id = agente_id;
+
+    if (Object.keys(dadosParaAtualizar).length === 0) {
+        return res.status(400).send("Nenhum campo válido para atualizar foi enviado.");
+    }
+
+    const casoAtualizado = updateById(id, dadosParaAtualizar);
     
     if (!casoAtualizado) {
         return res.status(404).send(`Caso com id:${id} não encontrado.`);
@@ -98,3 +108,4 @@ export const atualizarAtributosDoCaso = (req, res) => {
 
     res.status(200).json(casoAtualizado);
 }
+```

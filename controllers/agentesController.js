@@ -74,8 +74,17 @@ export const atualizarAtributosDoAgente = (req, res) => {
         return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
-    if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
+    if (dataDeIncorporacao !== undefined && (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao))) {
         return res.status(400).send("Data de incorporação inválida ou no futuro.");
+    }
+
+    const dadosParaAtualizar = {};
+    if (nome !== undefined) dadosParaAtualizar.nome = nome;
+    if (dataDeIncorporacao !== undefined) dadosParaAtualizar.dataDeIncorporacao = dataDeIncorporacao;
+    if (cargo !== undefined) dadosParaAtualizar.cargo = cargo;
+
+    if (Object.keys(dadosParaAtualizar).length === 0) {
+        return res.status(400).send("Nenhum campo válido para atualizar foi enviado.");
     }
 
     const updatedAgente = updateById(id,  {nome, dataDeIncorporacao, cargo});
