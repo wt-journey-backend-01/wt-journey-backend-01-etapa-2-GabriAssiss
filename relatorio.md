@@ -1,213 +1,183 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 4 créditos restantes para usar o sistema de feedback AI.
+Você tem 3 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para GabriAssiss:
 
-Nota final: **91.3/100**
+Nota final: **100.0/100**
 
 Olá, GabriAssiss! 👋🚀
 
-Antes de mais nada, parabéns pelo excelente trabalho! 🎉 Você entregou uma API muito bem estruturada, com rotas, controllers e repositories organizados, e conseguiu implementar a maioria dos métodos HTTP para os recursos `/agentes` e `/casos`. Isso já é um baita sinal de maturidade no desenvolvimento com Node.js e Express! 👏
-
-Além disso, você fez um ótimo trabalho validando os dados recebidos e tratando erros com status codes apropriados, como 400 para dados inválidos e 404 para recursos não encontrados. Também ficou claro que você entendeu a importância de não permitir alterações no ID dos recursos, o que é uma boa prática para manter a consistência dos dados. 👍
-
-### 🎯 Pontos Fortes que Merecem Destaque
-
-- Organização do projeto seguindo a arquitetura modular (rotas, controllers, repositories) — isso facilita muito a manutenção.
-- Uso correto do `express.json()` para manipular payloads JSON.
-- Validações robustas nos controllers, como verificação de datas, status e existência de agentes.
-- Implementação completa dos métodos HTTP para os recursos principais.
-- Uso do UUID para gerar IDs únicos.
-- Tratamento correto dos status HTTP (201 para criação, 204 para deleção, etc).
-- Você ainda tentou implementar funcionalidades bônus relacionadas a filtros e mensagens customizadas, o que mostra seu interesse em ir além! 🌟
-
-Agora, vamos juntos analisar alguns pontos que podem ser melhorados para deixar sua API ainda mais redondinha. 😉
+Primeiramente, parabéns pelo seu empenho e dedicação! 🎉 Seu projeto está muito bem estruturado, e você implementou todos os endpoints obrigatórios para os recursos `/agentes` e `/casos` com suas respectivas operações (GET, POST, PUT, PATCH, DELETE). Isso é um baita mérito! Além disso, você aplicou corretamente as validações, o tratamento de erros com status codes adequados e a organização modular do seu código está impecável, seguindo a arquitetura com `routes`, `controllers` e `repositories`. 👏👏
 
 ---
 
-## 🚨 Onde podemos melhorar: análise detalhada dos pontos que precisam de atenção
+## O que você arrasou! 🌟
 
-### 1. Atualização parcial (PATCH) do agente não está funcionando corretamente
+- **Arquitetura modular impecável:** Seus arquivos estão organizados exatamente como esperado — `routes/`, `controllers/`, `repositories/`, `utils/` e `server.js` configurando o Express e importando as rotas. Isso faz seu código ficar limpo e escalável.
+  
+- **Validações e erros:** Você validou campos obrigatórios, datas, status e IDs relacionados, retornando os códigos HTTP corretos (400, 404, 201, 204, etc). Isso é fundamental para uma API robusta e confiável.
+  
+- **Uso correto do Express Router:** As rotas estão bem configuradas com `express.Router()`, e você exporta/importa elas corretamente no `server.js`.
 
-Você tem um problema fundamental na função `atualizarAtributosDoAgente` no arquivo `controllers/agentesController.js`. Vou explicar:
+- **Uso do UUID para IDs:** Excelente prática para garantir IDs únicos.
 
-```js
-export const atualizarAtributosDoAgente = (req, res) => {
-    // ... código omitido para foco
-    const updatedAgente = updateById(id,  {nome, dataDeIncorporacao, cargo});
-    
-    if (!updatedAgente) {
-        return res.status(404).send(`Agente com id:${id} não encontrado.`);
-    }
+- **Implementação dos métodos HTTP:** Todos os métodos estão presentes para ambos os recursos, e o fluxo de criação, leitura, atualização e exclusão está bem definido.
 
-    res.status(200).json(updatedAgente);
-}
-```
-
-Aqui você está sempre passando para o `updateById` o objeto `{nome, dataDeIncorporacao, cargo}`, mesmo que alguns desses campos sejam `undefined` (quando não enviados no PATCH). Isso faz com que, ao atualizar parcialmente, você possa estar sobrescrevendo dados existentes com `undefined`, o que não é o comportamento esperado.
-
-Você já criou o objeto `dadosParaAtualizar` com os campos que realmente foram enviados e são válidos:
-
-```js
-const dadosParaAtualizar = {};
-if (nome !== undefined) dadosParaAtualizar.nome = nome;
-if (dataDeIncorporacao !== undefined) dadosParaAtualizar.dataDeIncorporacao = dataDeIncorporacao;
-if (cargo !== undefined) dadosParaAtualizar.cargo = cargo;
-```
-
-Mas depois não o usou na chamada para `updateById`. O correto é passar esse objeto para atualizar somente os campos enviados:
-
-```js
-const updatedAgente = updateById(id, dadosParaAtualizar);
-```
-
-Assim, você evita sobrescrever dados com `undefined` e permite atualizações parciais corretas.
-
-**Por que isso é importante?**  
-Se você passar `{nome: undefined, dataDeIncorporacao: undefined, cargo: undefined}`, o `updateById` vai sobrescrever os valores existentes com `undefined`, apagando informações importantes do agente.
+- **Bônus:** Você tentou implementar filtros e mensagens customizadas (apesar de não terem passado todos os critérios do bônus, o esforço é notável e já está no caminho certo).
 
 ---
 
-### 2. Validação do agente na criação de casos (POST /casos) não está funcionando como esperado
+## Pontos que encontrei para melhorar e dicas para você crescer ainda mais 👀
 
-No `controllers/casosController.js`, você faz essa verificação para garantir que o `agente_id` enviado exista:
+### 1. Filtros e buscas avançadas ainda não implementados
 
-```js
-if(!findAgenteById(req.body.agente_id)) {
-    return res.status(400).send('Id do agente inválido.');
-}
-```
+Percebi que os testes relacionados a filtros e buscas avançadas (como filtrar casos por status, agente responsável ou palavras-chave, e ordenar agentes por data de incorporação) não passaram. Isso indica que você ainda não implementou endpoints ou query params para essas funcionalidades.
 
-Porém, percebi que o teste que verifica se a API retorna `404` ao tentar criar um caso com `agente_id` inválido falhou. Isso indica que, provavelmente, seu `findAgenteById` não está encontrando corretamente o agente inexistente, ou que o status retornado está incorreto.
-
-**O que deve ser corrigido?**
-
-- O status correto para recurso não encontrado é **404 (Not Found)**, e não 400.  
-- Então, ao validar o `agente_id` na criação do caso, você deve retornar `404` caso o agente não exista, pois o recurso referenciado não foi encontrado.
-
-Exemplo corrigido:
+Por exemplo, para filtrar casos pelo status, você poderia modificar seu endpoint GET `/casos` para aceitar query params e filtrar o array em memória:
 
 ```js
-if(!findAgenteById(req.body.agente_id)) {
-    return res.status(404).send('Agente com id informado não encontrado.');
-}
-```
-
-Isso deixa a API mais clara e alinhada com as boas práticas REST.
-
----
-
-### 3. Filtros, ordenação e mensagens de erro customizadas (Bônus) não implementados
-
-Você tentou implementar funcionalidades extras como filtros por status, agente responsável, palavras-chave, ordenação por data de incorporação e mensagens customizadas para erros.
-
-No entanto, não encontrei nenhuma implementação dessas funcionalidades nos seus controllers ou rotas. Por exemplo, não há tratamento para query params que permitam filtrar os casos ou agentes.
-
-**Por que isso é importante?**  
-Esses recursos são excelentes para deixar a API mais poderosa e amigável para os consumidores. Além disso, mostram domínio avançado do Express.js e manipulação de dados.
-
-Se quiser implementar, você pode começar assim:
-
-```js
-// Exemplo simples de filtro por status no endpoint GET /casos
+// Exemplo simplificado no controller de casos
 export const acharCaso = (req, res) => {
-    const { status } = req.query;
-    let resultados = findAll();
+  const { status, agente_id, q } = req.query;
+  let resultados = findAll();
 
-    if (status) {
-        resultados = resultados.filter(caso => caso.status === status);
-    }
+  if (status) {
+    resultados = resultados.filter(caso => caso.status === status);
+  }
+  if (agente_id) {
+    resultados = resultados.filter(caso => caso.agente_id === agente_id);
+  }
+  if (q) {
+    const termo = q.toLowerCase();
+    resultados = resultados.filter(caso =>
+      caso.titulo.toLowerCase().includes(termo) ||
+      caso.descricao.toLowerCase().includes(termo)
+    );
+  }
 
-    res.status(200).json(resultados);
+  res.status(200).json(resultados);
+};
+```
+
+Isso daria um super upgrade na sua API e atenderia esses requisitos bônus! 😉
+
+Se quiser entender melhor como manipular query params e filtrar dados, recomendo fortemente este vídeo da Express.js:  
+https://expressjs.com/pt-br/guide/routing.html  
+e este sobre manipulação de arrays em JS:  
+https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+
+---
+
+### 2. Mensagens de erro customizadas para filtros e argumentos inválidos
+
+Você já tem um ótimo tratamento de erros para os campos obrigatórios e IDs inválidos, mas para os filtros bônus, a API deveria retornar mensagens de erro customizadas quando o usuário passar argumentos inválidos na query string, como status inválido ou data mal formatada.
+
+Por exemplo, se alguém enviar `/casos?status=fechado` (que não é 'aberto' nem 'solucionado'), sua API poderia responder:
+
+```json
+{
+  "error": "Status inválido no filtro. Use 'aberto' ou 'solucionado'."
 }
 ```
 
----
+Isso deixa a API mais amigável e fácil de usar.
 
-### 4. Pequena melhoria na organização do servidor (server.js)
-
-No seu `server.js`, você fez assim:
-
-```js
-app.listen(PORT, () => {
-    console.log(`Servidor do Departamento de Polícia rodando em localhost:${PORT}`);
-});
-
-app.use('/casos', casosRouter);
-app.use('/agentes', agentesRouter);
-```
-
-A ordem ideal é colocar os middlewares e rotas **antes** do `app.listen()`. Isso evita que o servidor comece a escutar antes de estar totalmente configurado.
-
-Exemplo recomendado:
-
-```js
-app.use(express.json());
-
-app.use('/casos', casosRouter);
-app.use('/agentes', agentesRouter);
-
-app.listen(PORT, () => {
-    console.log(`Servidor do Departamento de Polícia rodando em localhost:${PORT}`);
-});
-```
+Para aprender mais sobre como construir respostas de erro personalizadas e status 400, veja este material:  
+https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
+e este vídeo sobre validação em Node.js/Express:  
+https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
 
 ---
 
-## 📚 Recursos para você aprofundar e corrigir esses pontos
+### 3. Ordenação (sorting) dos agentes por data de incorporação
 
-- Para entender melhor como lidar com atualizações parciais e manipular objetos no JavaScript:  
-  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI (Manipulação de Arrays e Objetos em JS)
+Outro ponto do bônus que não foi implementado é a ordenação de agentes por data de incorporação, tanto em ordem crescente quanto decrescente. Para isso, você pode usar `Array.sort()` no resultado do `findAll()`:
 
-- Para aprimorar o uso correto dos status HTTP, especialmente 400 e 404:  
+```js
+export const acharAgente = (req, res) => {
+  const { sort } = req.query; // ex: sort=asc ou sort=desc
+  let agentesList = findAll();
+
+  if (sort === 'asc') {
+    agentesList = agentesList.sort((a, b) => new Date(a.dataDeIncorporacao) - new Date(b.dataDeIncorporacao));
+  } else if (sort === 'desc') {
+    agentesList = agentesList.sort((a, b) => new Date(b.dataDeIncorporacao) - new Date(a.dataDeIncorporacao));
+  }
+
+  res.status(200).json(agentesList);
+};
+```
+
+Isso vai ajudar bastante a entregar uma API que atende melhor as necessidades do usuário.
+
+---
+
+### 4. Pequena sugestão para melhorar a imutabilidade no repositório
+
+No seu `deleteById` dos repositórios, você está fazendo:
+
+```js
+agentes = agentes.filter((agente) =>(agente.id != id));
+```
+
+Isso funciona, mas poderia causar problemas se outras partes do código mantiverem referência ao array antigo. Uma abordagem mais segura é usar `splice` para remover o item diretamente:
+
+```js
+export const deleteById = (id) => {
+  const index = agentes.findIndex((agente) => agente.id == id);
+  if (index === -1) return -1;
+  agentes.splice(index, 1);
+  return index;
+};
+```
+
+Assim você modifica o array original sem criar uma nova referência, o que pode evitar bugs sutis.
+
+---
+
+### 5. Documentação e comentários
+
+Seu código está bem legível, mas adicionar comentários explicando o propósito de funções e blocos pode ajudar quando o projeto crescer ou alguém novo precisar entender seu código. Isso é uma boa prática para projetos profissionais.
+
+---
+
+## Recursos que recomendo para você aprofundar seus conhecimentos:
+
+- **Arquitetura MVC e organização de projetos Node.js/Express:**  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+
+- **Manipulação de arrays em JS (filter, find, sort):**  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+
+- **Validação e tratamento de erros em APIs:**  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
 
-- Para aprender a implementar filtros e ordenação em endpoints REST com Express.js:  
-  https://expressjs.com/pt-br/guide/routing.html (Seção sobre Query Strings)  
-  https://youtu.be/RSZHvQomeKE (Explicação sobre APIs REST e Express.js)
-
-- Para entender mais sobre arquitetura MVC e organização de projetos Node.js:  
-  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+- **Express.js e roteamento:**  
+  https://expressjs.com/pt-br/guide/routing.html
 
 ---
 
-## 🗂️ Sobre a estrutura do seu projeto
+## Resumo rápido dos pontos para focar:
 
-Sua estrutura de arquivos está perfeita e segue exatamente o que foi solicitado! 👏
+- [ ] Implementar filtros e buscas avançadas para `/casos` e `/agentes` via query params (status, agente_id, palavras-chave, dataDeIncorporacao).
 
-```
-.
-├── controllers/
-├── repositories/
-├── routes/
-├── utils/
-├── docs/
-├── package.json
-└── server.js
-```
+- [ ] Adicionar ordenação (sorting) para agentes por data de incorporação (asc e desc).
 
-Manter essa organização é fundamental para a escalabilidade e manutenção do seu código.
+- [ ] Criar respostas de erro customizadas para filtros inválidos (ex: status inválido na query).
+
+- [ ] Melhorar a manipulação dos arrays no repositório para evitar problemas com referências (usar `splice` ao deletar).
+
+- [ ] Comentar seu código para facilitar manutenção futura.
 
 ---
 
-## 📝 Resumo dos principais pontos para focar:
+Gabri, você está no caminho certo e já construiu uma base sólida para sua API! 🚓🔍 Com esses ajustes, sua aplicação vai ficar ainda mais completa e profissional. Continue explorando e aprimorando suas habilidades — você tem muito potencial! 💪✨
 
-- **Corrigir o PATCH de agentes para usar o objeto `dadosParaAtualizar` na atualização parcial e evitar sobrescrever campos com `undefined`.**
-- **Alterar o status code para 404 ao criar um caso com `agente_id` inválido, para respeitar o padrão REST.**
-- **Implementar filtros, ordenação e mensagens de erro customizadas para melhorar a usabilidade da API (funcionalidades bônus).**
-- **Ajustar a ordem das chamadas no `server.js` para configurar middlewares e rotas antes de iniciar o servidor.**
+Se precisar de ajuda para implementar os filtros ou qualquer outra coisa, pode me chamar que eu te ajudo com o maior prazer! 😉
 
----
-
-Gabri, você está muito bem encaminhada! Seu código está limpo, organizado e a maior parte das funcionalidades essenciais está funcionando. Com esses ajustes, sua API vai ficar ainda mais robusta e alinhada às melhores práticas do desenvolvimento backend. 💪✨
-
-Continue assim, sempre buscando entender a causa raiz dos problemas e aprimorando seu código. Se precisar, revisite os recursos que indiquei para consolidar seu conhecimento.
-
-Qualquer dúvida, estou aqui para ajudar! 🚀👩‍💻👨‍💻
-
-Um abraço de Code Buddy! 🤖💙
+Um abraço e sucesso na sua jornada de desenvolvimento! 🚀👩‍💻👨‍💻
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
