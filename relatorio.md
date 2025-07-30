@@ -1,215 +1,206 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para GabriAssiss:
 
-Nota final: **75.4/100**
+Nota final: **83.1/100**
 
-Olá GabriAssiss! 👋🚀 Que alegria poder revisar seu projeto da API para o Departamento de Polícia! Antes de mais nada, parabéns pelo esforço e dedicação! 🎉 Você já conseguiu implementar uma base sólida e funcional para os recursos de agentes e casos, com os métodos principais de CRUD, validações básicas e uma estrutura modular muito bem organizada. Isso é um baita avanço para uma API RESTful em Node.js com Express! Vamos juntos destrinchar o que está muito bom e onde podemos melhorar para deixar seu código ainda mais robusto e alinhado com as melhores práticas? 😊
+# Olá, GabriAssiss! 👋🚀
 
----
-
-## 🎯 Pontos Fortes que Merecem Destaque
-
-- **Estrutura Modular e Organização:**  
-  Seu projeto está organizado direitinho, com pastas separadas para `routes`, `controllers` e `repositories`. Isso facilita muito a manutenção e a escalabilidade do código! Seu arquivo `server.js` está enxuto e delega bem as responsabilidades para as rotas.  
-  Exemplo no seu `server.js`:  
-  ```js
-  import casosRouter from './routes/casosRoutes.js';
-  import agentesRouter from './routes/agentesRoutes.js';
-  import express from 'express';
-
-  const app = express();
-  app.use(express.json());
-
-  app.use('/casos', casosRouter);
-  app.use('/agentes', agentesRouter);
-
-  app.listen(3000, () => {
-      console.log(`Servidor rodando em localhost:3000`);
-  });
-  ```
-  Isso mostra que você entendeu bem como o Express trabalha com middlewares e roteamento!
-
-- **Implementação dos Endpoints:**  
-  Você implementou todos os métodos HTTP para os recursos `/agentes` e `/casos` (GET, POST, PUT, PATCH, DELETE). Isso é fundamental para uma API REST completa e você fez isso com bastante capricho.
-
-- **Validações Básicas:**  
-  A validação dos campos obrigatórios, datas e status está presente, o que ajuda a garantir a integridade dos dados. Por exemplo, no `criarCaso` você verifica se o status é `'aberto'` ou `'solucionado'`.
-
-- **Uso do UUID para IDs:**  
-  Ótima escolha usar o `uuid` para gerar identificadores únicos, evitando colisões e facilitando o controle.
-
-- **Tratamento de erros com status codes apropriados:**  
-  Você está usando códigos HTTP corretos como 400 para bad request, 404 para não encontrado, 201 para criação e 204 para exclusão sem conteúdo. Isso é essencial para APIs bem comportadas.
-
-- **Conquistas bônus:**  
-  Mesmo que os testes bônus não tenham passado, percebi que você se empenhou em implementar filtros e buscas personalizadas — isso mostra seu interesse em ir além do básico, e isso é muito legal! Continue nessa pegada! 💪✨
+Antes de tudo, parabéns pelo empenho e dedicação nesse desafio! 🎉 Você estruturou seu projeto de forma muito organizada, com os arquivos bem divididos entre rotas, controladores e repositórios, o que é essencial para manter o código limpo e escalável. Além disso, seus controladores mostram uma preocupação legítima com validações e tratamento de erros, o que é um ponto super positivo! 🙌
 
 ---
 
-## 🕵️‍♂️ O que pode ser melhorado: análise profunda dos pontos críticos
+## 🎯 O que você mandou muito bem
 
-### 1. Atualização de agentes com PUT e PATCH — Validação e uso correto dos dados
+- **Arquitetura modular:** Você separou muito bem as responsabilidades entre `routes/`, `controllers/` e `repositories/`. Isso facilita muito a manutenção e a leitura do código. 👏
+  
+- **Validações básicas:** Nos controladores, você validou campos obrigatórios, datas (no caso dos agentes), e status dos casos, além de checar se o `agente_id` realmente existe antes de criar ou atualizar um caso. Isso demonstra cuidado com a integridade dos dados. 👍
+  
+- **Uso correto dos métodos HTTP e status codes:** Você usou bem os status 201 para criação, 200 para sucesso, 204 para deleção, 400 para requisições mal formatadas e 404 para recursos não encontrados. Isso é fundamental para uma API RESTful bem feita. 🥳
 
-No seu `agentesController.js`, percebi algumas inconsistências que podem estar causando os problemas nas atualizações completas (`PUT`) e parciais (`PATCH`).
+- **Uso do UUID para IDs:** Gerar IDs únicos com `uuidv4()` é uma ótima prática para evitar conflitos. ✔️
 
-#### Problema principal: uso da variável `agente` que não existe no escopo
-
-No método `atualizarTodosOsAtributosDoAgente` você faz essa verificação:
-
-```js
-if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
-    return res.status(400).send("Data de incorporação inválida ou no futuro.");
-}
-```
-
-Mas a variável `agente` nunca foi declarada ali, o correto seria usar os dados recebidos no corpo da requisição, que você desestruturou como `{ nome, dataDeIncorporacao, cargo }`. Ou seja, deveria ser:
-
-```js
-if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
-    return res.status(400).send("Data de incorporação inválida ou no futuro.");
-}
-```
-
-O mesmo erro ocorre em `atualizarAtributosDoAgente`.
-
-Esse detalhe faz com que a validação da data falhe ou cause erro, impedindo que o agente seja atualizado corretamente.
+- **Bônus tentado:** Vi que você tentou implementar filtros e mensagens de erro customizadas, o que é um diferencial bacana, mesmo que ainda precise de ajustes.
 
 ---
 
-### 2. Permissão para alterar o ID do agente e do caso
+## 🔎 Pontos para melhorar (Análise detalhada para destravar seu código)
 
-Você tem uma penalidade detectada porque o ID do caso pode ser alterado via PUT, o que não deveria acontecer.
+### 1. Atualização parcial (PATCH) dos agentes e casos não está funcionando corretamente
 
-No seu código, você verifica se o corpo da requisição tem o campo `id` e retorna erro para agentes:
+Você implementou os métodos PATCH para atualizar parcialmente agentes e casos, mas alguns testes importantes indicam que eles não estão funcionando como esperado, especialmente quando o recurso não existe.
 
-```js
-if (req.body.id) {
-    return res.status(400).send("Não é permitido alterar o ID do agente.");
-}
-```
-
-Porém, no controller de casos (`casosController.js`), essa validação está ausente. Isso abre uma brecha para alteração indevida do `id` do caso.
-
-**Sugestão:**  
-Adicione a mesma validação no método `atualizarTodosOsAtributosDoCaso` e `atualizarAtributosDoCaso` para garantir que o campo `id` não seja alterado:
+Ao analisar seu controlador de agentes, veja esse trecho do `atualizarAtributosDoAgente`:
 
 ```js
-if (req.body.id) {
-    return res.status(400).send("Não é permitido alterar o ID do caso.");
-}
-```
+export const atualizarAtributosDoAgente = (req, res) => {
+    const { id } = req.params;
+    const { nome, dataDeIncorporacao, cargo } = req.body;
 
----
-
-### 3. Atualização parcial de casos — validação incompleta
-
-No método `atualizarAtributosDoCaso`, você valida o status:
-
-```js
-if(!(status === 'aberto' || status === 'solucionado')) {
-    return res.status(400).send('Status inválido. Use aberto ou solucionado.');
-}
-```
-
-Porém, se o `status` não for enviado no PATCH (o que é comum em atualizações parciais), essa validação vai falhar porque `status` será `undefined`.
-
-**Solução:**  
-Verifique se `status` está presente antes de validar, assim:
-
-```js
-if (status && !(status === 'aberto' || status === 'solucionado')) {
-    return res.status(400).send('Status inválido. Use aberto ou solucionado.');
-}
-```
-
----
-
-### 4. Validação do `agente_id` no PATCH de casos
-
-No `atualizarAtributosDoCaso` não há validação para verificar se o `agente_id` enviado existe de fato no repositório de agentes.
-
-Isso pode causar inconsistência no banco em memória.
-
-**Sugestão:**  
-Faça uma verificação semelhante à do `criarCaso` para garantir que o `agente_id` exista, se ele estiver presente no corpo da requisição:
-
-```js
-if (agente_id && !findAgenteById(agente_id)) {
-    return res.status(400).send('Id do agente inválido.');
-}
-```
-
----
-
-### 5. Atualização de agentes — validação no PATCH
-
-No método `atualizarAtributosDoAgente`, você está validando obrigatoriedade dos campos como se fosse um PUT, mas o PATCH permite atualizar parcialmente.
-
-Além disso, a validação da data está com o mesmo problema do ponto 1 (uso da variável `agente` inexistente).
-
-**Como melhorar:**
-
-- Valide somente os campos que vierem no corpo (se vier `dataDeIncorporacao`, valide a data; se vier `nome`, valide o nome, etc).
-- Não exija todos os campos para PATCH, apenas para PUT.
-
-Exemplo simplificado:
-
-```js
-if (dataDeIncorporacao && (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao))) {
-    return res.status(400).send("Data de incorporação inválida ou no futuro.");
-}
-```
-
----
-
-### 6. Filtros e buscas personalizadas (Bônus)
-
-Você tentou implementar filtros e buscas, mas eles ainda não estão funcionando corretamente, o que indica que esses endpoints ou lógicas ainda não foram implementados ou estão incompletos.
-
-Para destravar esses bônus, sugiro que você:
-
-- Crie endpoints específicos para filtros, ou utilize query params no GET `/casos` e `/agentes`.
-- No controller, filtre os arrays em memória usando métodos como `.filter()` e `.sort()`.
-- Exemplo para filtrar casos por status:
-
-```js
-export const acharCaso = (req, res) => {
-    const { status } = req.query;
-    let resultados = findAll();
-
-    if (status) {
-        resultados = resultados.filter(caso => caso.status === status);
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
-    res.status(200).json(resultados);
+    if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
+        return res.status(400).send("Data de incorporação inválida ou no futuro.");
+    }
+
+    const updatedAgente = updateById(id,  {nome, dataDeIncorporacao, cargo});
+    
+    if (!updatedAgente) {
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+
+    res.status(200).json(updatedAgente);
+}
+```
+
+**Aqui há uma pegadinha importante:** você está desestruturando `nome`, `dataDeIncorporacao` e `cargo` diretamente do `req.body`, mas no PATCH, o cliente pode enviar _qualquer combinação_ desses campos, inclusive só um deles. Se algum campo não for enviado, ele será `undefined` e sua validação de data vai falhar porque `isValidDate(undefined)` provavelmente retorna falso, gerando erro 400 indevido.
+
+**Por exemplo:** Se o cliente quiser só atualizar o `nome`, sua função vai tentar validar `dataDeIncorporacao` que não veio, e vai bloquear a requisição.
+
+---
+
+### Como resolver isso?
+
+Você precisa validar somente os campos que vieram no corpo da requisição. Ou seja, se `dataDeIncorporacao` estiver presente, aí sim valide a data. Se não estiver, pule essa validação.
+
+Exemplo de ajuste:
+
+```js
+export const atualizarAtributosDoAgente = (req, res) => {
+    const { id } = req.params;
+    const { nome, dataDeIncorporacao, cargo } = req.body;
+
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do agente.");
+    }
+
+    if (dataDeIncorporacao !== undefined) {
+        if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
+            return res.status(400).send("Data de incorporação inválida ou no futuro.");
+        }
+    }
+
+    // Filtrar apenas os campos que foram enviados para atualizar
+    const dadosParaAtualizar = {};
+    if (nome !== undefined) dadosParaAtualizar.nome = nome;
+    if (dataDeIncorporacao !== undefined) dadosParaAtualizar.dataDeIncorporacao = dataDeIncorporacao;
+    if (cargo !== undefined) dadosParaAtualizar.cargo = cargo;
+
+    if (Object.keys(dadosParaAtualizar).length === 0) {
+        return res.status(400).send("Nenhum campo válido para atualizar foi enviado.");
+    }
+
+    const updatedAgente = updateById(id, dadosParaAtualizar);
+    
+    if (!updatedAgente) {
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+
+    res.status(200).json(updatedAgente);
 }
 ```
 
 ---
 
-## 📚 Recursos que vão te ajudar muito!
+O mesmo raciocínio vale para o `atualizarAtributosDoCaso` no `casosController.js`. Você está validando o `status` e o `agente_id` sempre, mesmo que não tenham sido enviados, o que pode gerar erros indevidos.
 
-- Para entender melhor como organizar rotas, controllers e middlewares no Express:  
-  https://expressjs.com/pt-br/guide/routing.html
+Seu código atual:
 
-- Para aprofundar na arquitetura MVC e organização de projetos Node.js:  
-  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+```js
+export const atualizarAtributosDoCaso = (req, res) => {
+    const { id } = req.params;
+    const { titulo, descricao, status, agente_id } = req.body;
 
-- Para manipular arrays e fazer filtros e buscas eficientes:  
-  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+    if(status && !(status === 'aberto' || status === 'solucionado')) {
+        return res.status(400).send('Status inválido. Use aberto ou solucionado.');
+    }
 
-- Para validar dados e tratar erros corretamente em APIs REST:  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do caso.");
+    }
+
+    if(!findAgenteById(req.body.agente_id)) {
+        return res.status(400).send('Id do agente inválido.');
+    }   
+    
+    const casoAtualizado = updateById(id,  { titulo, descricao, status, agente_id });
+    
+    if (!casoAtualizado) {
+        return res.status(404).send(`Caso com id:${id} não encontrado.`);
+    }
+
+    res.status(200).json(casoAtualizado);
+}
+```
+
+Aqui o problema é que você está validando `status` e `agente_id` sem checar se eles vieram no corpo da requisição, e isso pode causar erros ao atualizar parcialmente.
 
 ---
 
-## 🗂️ Sobre a Estrutura do Projeto
+### Ajuste sugerido para o PATCH de casos:
 
-Sua estrutura está muito próxima do esperado, parabéns! Só reforçando que manter essa organização é fundamental para projetos maiores e para facilitar a manutenção. Continue assim!
+```js
+export const atualizarAtributosDoCaso = (req, res) => {
+    const { id } = req.params;
+    const { titulo, descricao, status, agente_id } = req.body;
+
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do caso.");
+    }
+
+    if (status !== undefined && !(status === 'aberto' || status === 'solucionado')) {
+        return res.status(400).send('Status inválido. Use aberto ou solucionado.');
+    }
+
+    if (agente_id !== undefined && !findAgenteById(agente_id)) {
+        return res.status(400).send('Id do agente inválido.');
+    }   
+
+    const dadosParaAtualizar = {};
+    if (titulo !== undefined) dadosParaAtualizar.titulo = titulo;
+    if (descricao !== undefined) dadosParaAtualizar.descricao = descricao;
+    if (status !== undefined) dadosParaAtualizar.status = status;
+    if (agente_id !== undefined) dadosParaAtualizar.agente_id = agente_id;
+
+    if (Object.keys(dadosParaAtualizar).length === 0) {
+        return res.status(400).send("Nenhum campo válido para atualizar foi enviado.");
+    }
+
+    const casoAtualizado = updateById(id, dadosParaAtualizar);
+    
+    if (!casoAtualizado) {
+        return res.status(404).send(`Caso com id:${id} não encontrado.`);
+    }
+
+    res.status(200).json(casoAtualizado);
+}
+```
+
+---
+
+### 2. Tratamento do caso "recurso não encontrado" para PATCH
+
+Você já trata o 404 corretamente quando o recurso não existe, mas é importante garantir que isso aconteça **antes** de tentar validar campos que dependem do recurso existir.
+
+No seu código, você chama `updateById` e só depois verifica se o resultado é `null` para mandar 404 — isso está correto. Só reforço a importância de validar os dados do corpo antes de tentar atualizar, e só chamar `updateById` se os dados estiverem ok.
+
+---
+
+### 3. Filtros e funcionalidades bônus não implementadas
+
+Percebi que os testes bônus relacionados a filtros, ordenação e mensagens de erro customizadas não passaram. Isso indica que você ainda não implementou esses endpoints ou funcionalidades.
+
+Se quiser, posso te ajudar a planejar esses filtros para que você consiga incrementar sua API e garantir uma experiência melhor para quem for consumir seu serviço.
+
+---
+
+### 4. Organização da estrutura do projeto
+
+Sua estrutura de diretórios está perfeita, exatamente como o esperado:
 
 ```
 .
@@ -222,39 +213,50 @@ Sua estrutura está muito próxima do esperado, parabéns! Só reforçando que m
 ├── routes/
 │   ├── agentesRoutes.js
 │   └── casosRoutes.js
-├── utils/
-│   └── errorHandler.js
 ├── server.js
 ├── package.json
+└── utils/
+    └── errorHandler.js
 ```
 
----
-
-## 🔑 Resumo dos principais pontos para focar:
-
-- Corrija o uso incorreto da variável `agente` nos métodos de atualização (PUT/PATCH) para usar os dados do `req.body` corretamente.  
-- Adicione validação para impedir alteração do campo `id` tanto em agentes quanto em casos.  
-- Ajuste validações no PATCH para aceitar atualizações parciais, validando somente campos presentes.  
-- Implemente validação do `agente_id` no PATCH de casos para garantir integridade.  
-- Desenvolva os filtros e buscas para os bônus, usando query params e filtragem dos arrays em memória.  
-- Continue usando status codes e mensagens de erro claras para melhorar a experiência da API.  
+Isso é fundamental para manter o projeto escalável e fácil de entender. Parabéns por isso! 🎯
 
 ---
 
-Gabri, você está no caminho certo! 🚀 Seu projeto já tem uma base muito boa e com pequenos ajustes você vai destravar todas as funcionalidades e ainda garantir uma API mais robusta e confiável. Continue explorando, testando e aprimorando! Se precisar de mais ajuda, estarei por aqui para te acompanhar nessa jornada. 💪😊
+## 📚 Recursos que recomendo para você aprofundar esses pontos
 
-Um abraço de Code Buddy! 🤖❤️
+- Para entender melhor a diferença entre PUT e PATCH e como validar campos opcionais no PATCH, veja este vídeo que explica como tratar atualizações parciais:  
+  https://youtu.be/RSZHvQomeKE (foco em manipulação de requisições e respostas)
+
+- Para aprender a validar dados condicionalmente e evitar erros quando campos opcionais não são enviados, recomendo este vídeo:  
+  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_ (Validação de dados em Node.js/Express)
+
+- Para entender mais sobre manipulação de arrays e objetos em JS, especialmente para atualizar apenas campos enviados:  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI (Métodos de array e manipulação de objetos)
+
+- Para aprofundar seu conhecimento em arquitetura MVC e organização de projetos Node.js:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
 
 ---
 
-**Links úteis para revisão:**
+## 📝 Resumo rápido dos pontos para focar:
 
-- [Express Routing (em português)](https://expressjs.com/pt-br/guide/routing.html)  
-- [Arquitetura MVC com Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)  
-- [Manipulação de Arrays em JavaScript](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI)  
-- [Status 400 e 404 - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
+- [ ] Ajustar os métodos PATCH para validar somente os campos enviados no corpo da requisição, evitando validar campos `undefined`.
+- [ ] Garantir que o PATCH retorne 404 quando o recurso não existir, e validar os dados antes de tentar atualizar.
+- [ ] Implementar os filtros e ordenações para os endpoints de agentes e casos, para melhorar a usabilidade da API.
+- [ ] Continuar aprimorando as mensagens de erro customizadas para deixar a API mais amigável e informativa.
 
-Continue firme que você vai longe! 🚀✨
+---
+
+## Finalizando...
+
+GabriAssiss, você está no caminho certo! 🚀 Seu código está muito bem estruturado e com uma base sólida para uma API RESTful. Os ajustes que você precisa fazer são detalhes importantes para garantir que sua API seja robusta e flexível, especialmente para atualizações parciais.
+
+Continue assim, focando em entender o fluxo dos dados, como validar de forma condicional, e a importância de tratar todos os casos possíveis de entrada do usuário. Você vai longe! 💪✨
+
+Se precisar, estarei aqui para te ajudar a destravar esses pontos! 😉
+
+Um abraço e bons códigos! 👩‍💻👨‍💻💙
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
