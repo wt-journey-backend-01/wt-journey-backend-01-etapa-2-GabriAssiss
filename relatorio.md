@@ -1,226 +1,260 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 7 créditos restantes para usar o sistema de feedback AI.
+Você tem 6 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para GabriAssiss:
 
-Nota final: **41.5/100**
+Nota final: **75.4/100**
 
-# Feedback para GabriAssiss 🚓✨
-
-Olá, Gabri! Primeiro, quero te parabenizar pelo empenho e dedicação nesse desafio tão importante de construir uma API para o Departamento de Polícia! 👏🎉 Vi que você organizou seu projeto com controllers, routes e repositories, usou UUID para gerar IDs e fez validações básicas — isso é um ótimo começo! Também notei que você implementou filtros para busca de casos por palavras-chave, mandou bem no bônus aí! 🎯
+Olá GabriAssiss! 👋🚀 Que alegria poder revisar seu projeto da API para o Departamento de Polícia! Antes de mais nada, parabéns pelo esforço e dedicação! 🎉 Você já conseguiu implementar uma base sólida e funcional para os recursos de agentes e casos, com os métodos principais de CRUD, validações básicas e uma estrutura modular muito bem organizada. Isso é um baita avanço para uma API RESTful em Node.js com Express! Vamos juntos destrinchar o que está muito bom e onde podemos melhorar para deixar seu código ainda mais robusto e alinhado com as melhores práticas? 😊
 
 ---
 
-## O que está funcionando muito bem 🚀
+## 🎯 Pontos Fortes que Merecem Destaque
 
-- **Arquitetura modular:** Você separou bem as rotas, controllers e repositories, facilitando a manutenção e escalabilidade do código.  
-- **Uso do Express Router:** Nas rotas (`routes/agentesRoutes.js` e `routes/casosRoutes.js`) está tudo organizado e rotas HTTP estão todas mapeadas.  
-- **Validações básicas:** Nos controllers, você valida campos obrigatórios e status válidos, além de verificar se o agente existe antes de criar um caso.  
-- **Filtros bônus:** Você implementou o filtro simples por palavras-chave no título/descrição dos casos, um diferencial muito legal!  
-- **Tratamento de erros:** Você retorna status 400 e 404 quando apropriado, o que ajuda a API a ser mais robusta.  
+- **Estrutura Modular e Organização:**  
+  Seu projeto está organizado direitinho, com pastas separadas para `routes`, `controllers` e `repositories`. Isso facilita muito a manutenção e a escalabilidade do código! Seu arquivo `server.js` está enxuto e delega bem as responsabilidades para as rotas.  
+  Exemplo no seu `server.js`:  
+  ```js
+  import casosRouter from './routes/casosRoutes.js';
+  import agentesRouter from './routes/agentesRoutes.js';
+  import express from 'express';
+
+  const app = express();
+  app.use(express.json());
+
+  app.use('/casos', casosRouter);
+  app.use('/agentes', agentesRouter);
+
+  app.listen(3000, () => {
+      console.log(`Servidor rodando em localhost:3000`);
+  });
+  ```
+  Isso mostra que você entendeu bem como o Express trabalha com middlewares e roteamento!
+
+- **Implementação dos Endpoints:**  
+  Você implementou todos os métodos HTTP para os recursos `/agentes` e `/casos` (GET, POST, PUT, PATCH, DELETE). Isso é fundamental para uma API REST completa e você fez isso com bastante capricho.
+
+- **Validações Básicas:**  
+  A validação dos campos obrigatórios, datas e status está presente, o que ajuda a garantir a integridade dos dados. Por exemplo, no `criarCaso` você verifica se o status é `'aberto'` ou `'solucionado'`.
+
+- **Uso do UUID para IDs:**  
+  Ótima escolha usar o `uuid` para gerar identificadores únicos, evitando colisões e facilitando o controle.
+
+- **Tratamento de erros com status codes apropriados:**  
+  Você está usando códigos HTTP corretos como 400 para bad request, 404 para não encontrado, 201 para criação e 204 para exclusão sem conteúdo. Isso é essencial para APIs bem comportadas.
+
+- **Conquistas bônus:**  
+  Mesmo que os testes bônus não tenham passado, percebi que você se empenhou em implementar filtros e buscas personalizadas — isso mostra seu interesse em ir além do básico, e isso é muito legal! Continue nessa pegada! 💪✨
 
 ---
 
-## Pontos que precisam de atenção para destravar sua nota e funcionalidade 🔍
+## 🕵️‍♂️ O que pode ser melhorado: análise profunda dos pontos críticos
 
-### 1. IDs precisam ser UUIDs válidos para agentes e casos
+### 1. Atualização de agentes com PUT e PATCH — Validação e uso correto dos dados
 
-Você está usando a biblioteca `uuid` para gerar IDs, o que é ótimo! Porém, percebi que há uma penalidade porque os IDs usados não são UUIDs válidos. Isso acontece porque, no seu `save` você recebe o ID gerado fora e o adiciona ao objeto, mas em alguns pontos do código (ou nos testes), IDs inválidos podem estar sendo usados.
+No seu `agentesController.js`, percebi algumas inconsistências que podem estar causando os problemas nas atualizações completas (`PUT`) e parciais (`PATCH`).
 
-**Como garantir que IDs sejam UUIDs válidos?**
+#### Problema principal: uso da variável `agente` que não existe no escopo
 
-- Sempre gere o UUID dentro da função `criarAgente` e `criarCaso` usando `uuidv4()`.  
-- Evite aceitar IDs vindos do cliente para criação, só gere você mesmo.  
-- Se quiser garantir que um ID recebido seja UUID válido (em atualizações), você pode usar regex ou uma biblioteca para validar.
-
-Exemplo de geração e uso correto no controller:
+No método `atualizarTodosOsAtributosDoAgente` você faz essa verificação:
 
 ```js
-import { v4 as uuidv4 } from 'uuid';
-
-export const criarAgente = (req, res) => {
-    const agente = req.body;
-    // validações...
-    const id = uuidv4();  // gera UUID válido aqui
-    const agenteComId = save(id, agente);
-    res.status(201).json(agenteComId);
-};
-```
-
-Recomendo fortemente assistir o vídeo sobre fundamentos de API REST e Express.js para entender melhor o fluxo de criação e uso de IDs:  
-https://youtu.be/RSZHvQomeKE
-
----
-
-### 2. Falta de retorno em algumas respostas HTTP importantes (ex: DELETE)
-
-No seu controller de agentes, na função `deletarAgente` você faz:
-
-```js
-if(index == -1) {
-    return res.status(404).send(`Agente com id:${id} não encontrado.`);
+if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
+    return res.status(400).send("Data de incorporação inválida ou no futuro.");
 }
-res.status(204);
 ```
 
-Aqui o problema é que você não finaliza a resposta, precisa usar `res.status(204).send()` ou `res.status(204).end()` para que o cliente saiba que a requisição foi concluída. Sem isso, a requisição fica pendente e pode causar timeout.
-
-O mesmo acontece no `deletarCaso`:
+Mas a variável `agente` nunca foi declarada ali, o correto seria usar os dados recebidos no corpo da requisição, que você desestruturou como `{ nome, dataDeIncorporacao, cargo }`. Ou seja, deveria ser:
 
 ```js
-res.status(204).send(`Caso com id:${id} deletado.`);
-```
-
-O código 204 (No Content) não deve enviar corpo na resposta, então o ideal é usar:
-
-```js
-res.status(204).end();
-```
-
-Ou, se quiser enviar mensagem, use status 200 ou 202.
-
-Exemplo corrigido para o DELETE:
-
-```js
-res.status(204).end();
-```
-
-Ou
-
-```js
-res.status(200).send(`Agente com id:${id} deletado.`);
-```
-
-Isso é importante para respeitar o protocolo HTTP e garantir que o cliente receba a resposta corretamente.
-
----
-
-### 3. Atualização dos dados no array (mutabilidade e persistência)
-
-No método `atualizarTodosOsAtributosDoAgente`, você faz:
-
-```js
-const agente = findById(id);
-
-if (!agente) {
-    return res.status(404).send(`Agente com id:${id} não encontrado.`);
+if (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao)) {
+    return res.status(400).send("Data de incorporação inválida ou no futuro.");
 }
-
-// atualiza propriedades direto no objeto encontrado
-agente.nome = nome;
-agente.dataDeIncorporacao = dataDeIncorporacao;
-agente.cargo = cargo;
-
-res.status(200).send(`Agente com id ${id} foi atualizado com sucesso.`);
 ```
 
-Aqui, a atualização funciona porque `agente` é uma referência ao objeto dentro do array. Porém, no método `deleteById` você recria o array com `filter`, o que pode causar inconsistência se você não atualizar o array original corretamente.
+O mesmo erro ocorre em `atualizarAtributosDoAgente`.
 
-Para garantir que a atualização persista, recomendo que você crie funções específicas no repository para atualizar o agente ou caso, que substituam o objeto no array, assim:
+Esse detalhe faz com que a validação da data falhe ou cause erro, impedindo que o agente seja atualizado corretamente.
 
-```js
-export const updateById = (id, newData) => {
-    const index = agentes.findIndex(agente => agente.id === id);
-    if (index === -1) return null;
-    agentes[index] = { ...agentes[index], ...newData };
-    return agentes[index];
-};
-```
+---
 
-E no controller:
+### 2. Permissão para alterar o ID do agente e do caso
+
+Você tem uma penalidade detectada porque o ID do caso pode ser alterado via PUT, o que não deveria acontecer.
+
+No seu código, você verifica se o corpo da requisição tem o campo `id` e retorna erro para agentes:
 
 ```js
-const updatedAgente = updateById(id, { nome, dataDeIncorporacao, cargo });
-if (!updatedAgente) {
-    return res.status(404).send(`Agente com id:${id} não encontrado.`);
+if (req.body.id) {
+    return res.status(400).send("Não é permitido alterar o ID do agente.");
 }
-res.status(200).json(updatedAgente);
 ```
 
-Assim, você centraliza a manipulação do array e evita bugs futuros.
+Porém, no controller de casos (`casosController.js`), essa validação está ausente. Isso abre uma brecha para alteração indevida do `id` do caso.
 
----
-
-### 4. Validação de datas em agentes
-
-No seu controller de agentes, você faz validações para `dataDeIncorporacao` com funções `isValidDate` e `isFutureDate`, mas não vi essas funções definidas no código enviado. Isso pode causar erro ou falta de validação.
-
-Você precisa implementar essas funções para validar se a data está no formato correto e não é futura, por exemplo:
+**Sugestão:**  
+Adicione a mesma validação no método `atualizarTodosOsAtributosDoCaso` e `atualizarAtributosDoCaso` para garantir que o campo `id` não seja alterado:
 
 ```js
-const isValidDate = (dateString) => {
-  const date = new Date(dateString);
-  return !isNaN(date);
-};
-
-const isFutureDate = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  return date > now;
-};
+if (req.body.id) {
+    return res.status(400).send("Não é permitido alterar o ID do caso.");
+}
 ```
 
-Sem essas funções, a validação não funciona e pode deixar passar dados inválidos.
+---
+
+### 3. Atualização parcial de casos — validação incompleta
+
+No método `atualizarAtributosDoCaso`, você valida o status:
+
+```js
+if(!(status === 'aberto' || status === 'solucionado')) {
+    return res.status(400).send('Status inválido. Use aberto ou solucionado.');
+}
+```
+
+Porém, se o `status` não for enviado no PATCH (o que é comum em atualizações parciais), essa validação vai falhar porque `status` será `undefined`.
+
+**Solução:**  
+Verifique se `status` está presente antes de validar, assim:
+
+```js
+if (status && !(status === 'aberto' || status === 'solucionado')) {
+    return res.status(400).send('Status inválido. Use aberto ou solucionado.');
+}
+```
 
 ---
 
-### 5. Implementação incompleta dos filtros bônus
+### 4. Validação do `agente_id` no PATCH de casos
 
-Você conseguiu implementar o filtro simples por palavras-chave, parabéns! 🎉
+No `atualizarAtributosDoCaso` não há validação para verificar se o `agente_id` enviado existe de fato no repositório de agentes.
 
-Porém, os filtros mais complexos, como filtrar casos por status, por agente e ordenar agentes por data de incorporação, não foram implementados ainda.
+Isso pode causar inconsistência no banco em memória.
 
-Se quiser implementar, recomendo estudar como usar `req.query` para receber parâmetros opcionais, filtrar arrays com `filter` e ordenar com `sort`.
+**Sugestão:**  
+Faça uma verificação semelhante à do `criarCaso` para garantir que o `agente_id` exista, se ele estiver presente no corpo da requisição:
 
-Um recurso que vai te ajudar muito:  
-https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
-
----
-
-### 6. Estrutura de diretórios está correta, mas atenção à organização futura
-
-Sua estrutura está bem próxima do esperado, com as pastas `routes`, `controllers`, `repositories` e `utils`. Só fique atento para manter essa organização conforme o projeto cresce.
-
-Se quiser entender melhor a arquitetura MVC aplicada em Node.js, recomendo este vídeo que vai clarear muito esse conceito:  
-https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+```js
+if (agente_id && !findAgenteById(agente_id)) {
+    return res.status(400).send('Id do agente inválido.');
+}
+```
 
 ---
 
-## Resumo rápido dos principais pontos para focar:
+### 5. Atualização de agentes — validação no PATCH
 
-- ✅ Garanta que IDs usados para agentes e casos sejam sempre UUIDs válidos, gerados pelo servidor.  
-- ✅ Finalize as respostas HTTP corretamente, especialmente nos métodos DELETE (use `res.status(204).end()`).  
-- ✅ Centralize atualização e deleção no repository para manter o array consistente.  
-- ✅ Implemente as funções de validação de datas (`isValidDate`, `isFutureDate`).  
-- ✅ Avance na implementação dos filtros bônus para casos e agentes (status, agente responsável, ordenação).  
-- ✅ Continue mantendo a organização do projeto conforme a arquitetura modular.  
+No método `atualizarAtributosDoAgente`, você está validando obrigatoriedade dos campos como se fosse um PUT, mas o PATCH permite atualizar parcialmente.
 
----
+Além disso, a validação da data está com o mesmo problema do ponto 1 (uso da variável `agente` inexistente).
 
-Gabri, você está no caminho certo! Seu código mostra que você entendeu os conceitos básicos de API REST e Express, e já está aplicando boas práticas. Com esses ajustes que discutimos, sua API vai ficar muito mais robusta e alinhada com o que se espera de uma aplicação profissional. 💪🚓
+**Como melhorar:**
 
-Continue firme, aproveite os recursos que te indiquei para aprofundar seus conhecimentos e não hesite em me chamar para te ajudar a destravar qualquer ponto! Você consegue! 🌟
+- Valide somente os campos que vierem no corpo (se vier `dataDeIncorporacao`, valide a data; se vier `nome`, valide o nome, etc).
+- Não exija todos os campos para PATCH, apenas para PUT.
 
----
+Exemplo simplificado:
 
-Um abraço de Code Buddy,  
-Sempre aqui para te ajudar! 🤖❤️
-
----
-
-### Links úteis para você revisar e aprender mais:
-
-- Fundamentos Express.js e API REST: https://youtu.be/RSZHvQomeKE  
-- Arquitetura MVC em Node.js: https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
-- Manipulação de arrays em JavaScript: https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI  
-- Validação e tratamento de erros HTTP:  
-  - 400 Bad Request: https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  - 404 Not Found: https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
+```js
+if (dataDeIncorporacao && (!isValidDate(dataDeIncorporacao) || isFutureDate(dataDeIncorporacao))) {
+    return res.status(400).send("Data de incorporação inválida ou no futuro.");
+}
+```
 
 ---
 
-Boa codada e até a próxima revisão! 🚀✨
+### 6. Filtros e buscas personalizadas (Bônus)
+
+Você tentou implementar filtros e buscas, mas eles ainda não estão funcionando corretamente, o que indica que esses endpoints ou lógicas ainda não foram implementados ou estão incompletos.
+
+Para destravar esses bônus, sugiro que você:
+
+- Crie endpoints específicos para filtros, ou utilize query params no GET `/casos` e `/agentes`.
+- No controller, filtre os arrays em memória usando métodos como `.filter()` e `.sort()`.
+- Exemplo para filtrar casos por status:
+
+```js
+export const acharCaso = (req, res) => {
+    const { status } = req.query;
+    let resultados = findAll();
+
+    if (status) {
+        resultados = resultados.filter(caso => caso.status === status);
+    }
+
+    res.status(200).json(resultados);
+}
+```
+
+---
+
+## 📚 Recursos que vão te ajudar muito!
+
+- Para entender melhor como organizar rotas, controllers e middlewares no Express:  
+  https://expressjs.com/pt-br/guide/routing.html
+
+- Para aprofundar na arquitetura MVC e organização de projetos Node.js:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+
+- Para manipular arrays e fazer filtros e buscas eficientes:  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+
+- Para validar dados e tratar erros corretamente em APIs REST:  
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
+
+---
+
+## 🗂️ Sobre a Estrutura do Projeto
+
+Sua estrutura está muito próxima do esperado, parabéns! Só reforçando que manter essa organização é fundamental para projetos maiores e para facilitar a manutenção. Continue assim!
+
+```
+.
+├── controllers/
+│   ├── agentesController.js
+│   └── casosController.js
+├── repositories/
+│   ├── agentesRepository.js
+│   └── casosRepository.js
+├── routes/
+│   ├── agentesRoutes.js
+│   └── casosRoutes.js
+├── utils/
+│   └── errorHandler.js
+├── server.js
+├── package.json
+```
+
+---
+
+## 🔑 Resumo dos principais pontos para focar:
+
+- Corrija o uso incorreto da variável `agente` nos métodos de atualização (PUT/PATCH) para usar os dados do `req.body` corretamente.  
+- Adicione validação para impedir alteração do campo `id` tanto em agentes quanto em casos.  
+- Ajuste validações no PATCH para aceitar atualizações parciais, validando somente campos presentes.  
+- Implemente validação do `agente_id` no PATCH de casos para garantir integridade.  
+- Desenvolva os filtros e buscas para os bônus, usando query params e filtragem dos arrays em memória.  
+- Continue usando status codes e mensagens de erro claras para melhorar a experiência da API.  
+
+---
+
+Gabri, você está no caminho certo! 🚀 Seu projeto já tem uma base muito boa e com pequenos ajustes você vai destravar todas as funcionalidades e ainda garantir uma API mais robusta e confiável. Continue explorando, testando e aprimorando! Se precisar de mais ajuda, estarei por aqui para te acompanhar nessa jornada. 💪😊
+
+Um abraço de Code Buddy! 🤖❤️
+
+---
+
+**Links úteis para revisão:**
+
+- [Express Routing (em português)](https://expressjs.com/pt-br/guide/routing.html)  
+- [Arquitetura MVC com Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)  
+- [Manipulação de Arrays em JavaScript](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI)  
+- [Status 400 e 404 - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
+
+Continue firme que você vai longe! 🚀✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
