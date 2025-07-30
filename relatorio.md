@@ -1,277 +1,226 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 8 créditos restantes para usar o sistema de feedback AI.
+Você tem 7 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para GabriAssiss:
 
-Nota final: **62.2/100**
+Nota final: **41.5/100**
 
-# Feedback para GabriAssiss 🚔✨
+# Feedback para GabriAssiss 🚓✨
 
-Olá, Gabri! Primeiro, parabéns pelo empenho e pelo código que você entregou! 🎉 Você estruturou seu projeto de forma clara, usando rotas, controllers e repositories, e isso é fundamental para manter o código organizado e escalável. Além disso, você já conseguiu implementar a maioria dos endpoints básicos de agentes e casos, com validações importantes e tratamento de erros — isso é um baita avanço! 👏👏
-
-Também quero destacar que você tentou ir além, buscando implementar filtros e ordenações, além de mensagens de erro personalizadas. Embora essas funcionalidades ainda precisem de ajustes, é ótimo ver essa iniciativa! 🚀
+Olá, Gabri! Primeiro, quero te parabenizar pelo empenho e dedicação nesse desafio tão importante de construir uma API para o Departamento de Polícia! 👏🎉 Vi que você organizou seu projeto com controllers, routes e repositories, usou UUID para gerar IDs e fez validações básicas — isso é um ótimo começo! Também notei que você implementou filtros para busca de casos por palavras-chave, mandou bem no bônus aí! 🎯
 
 ---
 
-## Vamos analisar com carinho o que pode ser melhorado para deixar sua API tinindo! 🕵️‍♂️✨
+## O que está funcionando muito bem 🚀
+
+- **Arquitetura modular:** Você separou bem as rotas, controllers e repositories, facilitando a manutenção e escalabilidade do código.  
+- **Uso do Express Router:** Nas rotas (`routes/agentesRoutes.js` e `routes/casosRoutes.js`) está tudo organizado e rotas HTTP estão todas mapeadas.  
+- **Validações básicas:** Nos controllers, você valida campos obrigatórios e status válidos, além de verificar se o agente existe antes de criar um caso.  
+- **Filtros bônus:** Você implementou o filtro simples por palavras-chave no título/descrição dos casos, um diferencial muito legal!  
+- **Tratamento de erros:** Você retorna status 400 e 404 quando apropriado, o que ajuda a API a ser mais robusta.  
 
 ---
 
-### 1. Organização da Estrutura de Diretórios
+## Pontos que precisam de atenção para destravar sua nota e funcionalidade 🔍
 
-Eu dei uma olhada na estrutura do seu projeto e percebi que, apesar de estar quase correta, você não incluiu a pasta `docs/` com o arquivo `swagger.js` e o arquivo `utils/errorHandler.js` não está sendo utilizado no código. A estrutura esperada é:
+### 1. IDs precisam ser UUIDs válidos para agentes e casos
 
-```
-├── routes/
-│   ├── agentesRoutes.js
-│   └── casosRoutes.js
-├── controllers/
-│   ├── agentesController.js
-│   └── casosController.js
-├── repositories/
-│   ├── agentesRepository.js
-│   └── casosRepository.js
-├── docs/
-│   └── swagger.js
-└── utils/
-    └── errorHandler.js
-```
+Você está usando a biblioteca `uuid` para gerar IDs, o que é ótimo! Porém, percebi que há uma penalidade porque os IDs usados não são UUIDs válidos. Isso acontece porque, no seu `save` você recebe o ID gerado fora e o adiciona ao objeto, mas em alguns pontos do código (ou nos testes), IDs inválidos podem estar sendo usados.
 
-Ter essa organização é essencial para manter o projeto escalável e facilitar a manutenção. Por exemplo, o `errorHandler.js` pode ajudar a centralizar o tratamento de erros e deixar seu código mais limpo e reutilizável.
+**Como garantir que IDs sejam UUIDs válidos?**
 
-**Dica:** Mesmo que não tenha implementado o Swagger, criar a pasta `docs/` já é um passo importante para organizar a documentação da API.
+- Sempre gere o UUID dentro da função `criarAgente` e `criarCaso` usando `uuidv4()`.  
+- Evite aceitar IDs vindos do cliente para criação, só gere você mesmo.  
+- Se quiser garantir que um ID recebido seja UUID válido (em atualizações), você pode usar regex ou uma biblioteca para validar.
 
-Recomendo assistir esse vídeo para entender melhor a arquitetura MVC e organização de projetos Node.js:  
-▶️ [Arquitetura MVC em Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
-
----
-
-### 2. Validação da Data de Incorporação do Agente
-
-Você está validando se os campos `nome`, `dataDeIncorporacao` e `cargo` existem, mas não está validando se a data está no formato correto (YYYY-MM-DD) nem se não está no futuro. Isso abriu brecha para que agentes sejam criados com datas inválidas ou futuras, o que pode prejudicar a integridade dos dados.
-
-Por exemplo, no seu `criarAgente`:
+Exemplo de geração e uso correto no controller:
 
 ```js
-if(!req.body.nome || !req.body.dataDeIncorporacao || !req.body.cargo) {
-    res.status(400).send('Dados inválidos.');
+import { v4 as uuidv4 } from 'uuid';
+
+export const criarAgente = (req, res) => {
+    const agente = req.body;
+    // validações...
+    const id = uuidv4();  // gera UUID válido aqui
+    const agenteComId = save(id, agente);
+    res.status(201).json(agenteComId);
+};
+```
+
+Recomendo fortemente assistir o vídeo sobre fundamentos de API REST e Express.js para entender melhor o fluxo de criação e uso de IDs:  
+https://youtu.be/RSZHvQomeKE
+
+---
+
+### 2. Falta de retorno em algumas respostas HTTP importantes (ex: DELETE)
+
+No seu controller de agentes, na função `deletarAgente` você faz:
+
+```js
+if(index == -1) {
+    return res.status(404).send(`Agente com id:${id} não encontrado.`);
 }
+res.status(204);
 ```
 
-Aqui falta validar o formato da data e se não é uma data futura.
+Aqui o problema é que você não finaliza a resposta, precisa usar `res.status(204).send()` ou `res.status(204).end()` para que o cliente saiba que a requisição foi concluída. Sem isso, a requisição fica pendente e pode causar timeout.
 
-**Como melhorar?**
-
-Você pode usar uma função para verificar o formato da data e comparar com a data atual. Exemplo simplificado:
+O mesmo acontece no `deletarCaso`:
 
 ```js
-function isValidDate(dateString) {
-  // Regex para YYYY-MM-DD
-  const regex = /^\d{4}-\d{2}-\d{2}$/;
-  if(!regex.test(dateString)) return false;
+res.status(204).send(`Caso com id:${id} deletado.`);
+```
+
+O código 204 (No Content) não deve enviar corpo na resposta, então o ideal é usar:
+
+```js
+res.status(204).end();
+```
+
+Ou, se quiser enviar mensagem, use status 200 ou 202.
+
+Exemplo corrigido para o DELETE:
+
+```js
+res.status(204).end();
+```
+
+Ou
+
+```js
+res.status(200).send(`Agente com id:${id} deletado.`);
+```
+
+Isso é importante para respeitar o protocolo HTTP e garantir que o cliente receba a resposta corretamente.
+
+---
+
+### 3. Atualização dos dados no array (mutabilidade e persistência)
+
+No método `atualizarTodosOsAtributosDoAgente`, você faz:
+
+```js
+const agente = findById(id);
+
+if (!agente) {
+    return res.status(404).send(`Agente com id:${id} não encontrado.`);
+}
+
+// atualiza propriedades direto no objeto encontrado
+agente.nome = nome;
+agente.dataDeIncorporacao = dataDeIncorporacao;
+agente.cargo = cargo;
+
+res.status(200).send(`Agente com id ${id} foi atualizado com sucesso.`);
+```
+
+Aqui, a atualização funciona porque `agente` é uma referência ao objeto dentro do array. Porém, no método `deleteById` você recria o array com `filter`, o que pode causar inconsistência se você não atualizar o array original corretamente.
+
+Para garantir que a atualização persista, recomendo que você crie funções específicas no repository para atualizar o agente ou caso, que substituam o objeto no array, assim:
+
+```js
+export const updateById = (id, newData) => {
+    const index = agentes.findIndex(agente => agente.id === id);
+    if (index === -1) return null;
+    agentes[index] = { ...agentes[index], ...newData };
+    return agentes[index];
+};
+```
+
+E no controller:
+
+```js
+const updatedAgente = updateById(id, { nome, dataDeIncorporacao, cargo });
+if (!updatedAgente) {
+    return res.status(404).send(`Agente com id:${id} não encontrado.`);
+}
+res.status(200).json(updatedAgente);
+```
+
+Assim, você centraliza a manipulação do array e evita bugs futuros.
+
+---
+
+### 4. Validação de datas em agentes
+
+No seu controller de agentes, você faz validações para `dataDeIncorporacao` com funções `isValidDate` e `isFutureDate`, mas não vi essas funções definidas no código enviado. Isso pode causar erro ou falta de validação.
+
+Você precisa implementar essas funções para validar se a data está no formato correto e não é futura, por exemplo:
+
+```js
+const isValidDate = (dateString) => {
   const date = new Date(dateString);
-  return !isNaN(date.getTime());
-}
+  return !isNaN(date);
+};
 
-function isFutureDate(dateString) {
-  return new Date(dateString) > new Date();
-}
-
-// No criarAgente:
-if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
-  return res.status(400).send("Data de incorporação inválida ou no futuro.");
-}
+const isFutureDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  return date > now;
+};
 ```
 
-Assim você evita dados inconsistentes no seu sistema.
-
-Para aprofundar, veja:  
-📚 [Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)
+Sem essas funções, a validação não funciona e pode deixar passar dados inválidos.
 
 ---
 
-### 3. Prevenção de Alteração do ID nos Updates (PUT e PATCH)
+### 5. Implementação incompleta dos filtros bônus
 
-Percebi que no seu código, tanto para agentes quanto para casos, não há nenhuma proteção para impedir que o campo `id` seja alterado via PUT ou PATCH.
+Você conseguiu implementar o filtro simples por palavras-chave, parabéns! 🎉
 
-Por exemplo, no `atualizarTodosOsAtributosDoAgente`:
+Porém, os filtros mais complexos, como filtrar casos por status, por agente e ordenar agentes por data de incorporação, não foram implementados ainda.
 
-```js
-const { nome, dataDeIncorporacao, cargo } = req.body;
-// O id não é extraído do body, mas se vier no payload, você não está impedindo que ele seja alterado.
-```
+Se quiser implementar, recomendo estudar como usar `req.query` para receber parâmetros opcionais, filtrar arrays com `filter` e ordenar com `sort`.
 
-E no PATCH:
-
-```js
-if (nome) {agente.nome = nome;}
-if (dataDeIncorporacao) {agente.dataDeIncorporacao = dataDeIncorporacao;}
-if (cargo) {agente.cargo = cargo;}
-```
-
-Você deveria garantir que o `id` não seja alterado, pois isso pode causar inconsistência e quebra da referência dos dados.
-
-**Sugestão:**
-
-Antes de atualizar, ignore o campo `id` do corpo da requisição, ou retorne erro caso ele esteja presente.
-
-Exemplo para PATCH:
-
-```js
-if (req.body.id) {
-  return res.status(400).send("Não é permitido alterar o ID do agente.");
-}
-```
-
-Essa validação deve ser feita também para os casos.
+Um recurso que vai te ajudar muito:  
+https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
 
 ---
 
-### 4. Validação do `agente_id` na Criação e Atualização de Casos
+### 6. Estrutura de diretórios está correta, mas atenção à organização futura
 
-Um ponto muito importante que vi é que você não está validando se o `agente_id` informado em um caso existe de fato na lista de agentes. Isso permite criar casos vinculados a agentes que não existem, o que quebra a lógica da sua API.
+Sua estrutura está bem próxima do esperado, com as pastas `routes`, `controllers`, `repositories` e `utils`. Só fique atento para manter essa organização conforme o projeto cresce.
 
-No seu `criarCaso`:
-
-```js
-if(!req.body.titulo || !req.body.descricao || !req.body.agente_id) {
-    res.status(400).send('Dados inválidos.');
-}
-```
-
-Você valida se o campo existe, mas não se o `agente_id` corresponde a um agente real. Isso também se aplica nas atualizações.
-
-**Como corrigir?**
-
-Você precisa importar o repositório de agentes e verificar se o `agente_id` existe:
-
-```js
-import { findById as findAgenteById } from '../repositories/agentesRepository.js';
-
-if (!findAgenteById(req.body.agente_id)) {
-  return res.status(404).send('Agente responsável não encontrado.');
-}
-```
-
-Isso garante que não se crie ou atualize um caso com um agente inválido.
+Se quiser entender melhor a arquitetura MVC aplicada em Node.js, recomendo este vídeo que vai clarear muito esse conceito:  
+https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
 
 ---
 
-### 5. Retorno Inadequado em Métodos DELETE
+## Resumo rápido dos principais pontos para focar:
 
-Vi que nos seus métodos `deletarAgente` e `deletarCaso`, você está enviando uma mensagem no corpo da resposta com status 204 (No Content):
-
-```js
-res.status(204).send(`Agente com id:${id} deletado.`);
-```
-
-O status 204 significa que a resposta não deve ter corpo. Enviar texto junto pode causar comportamento inesperado em clientes.
-
-**O que fazer?**
-
-Use o status 204 com `res.sendStatus(204)` ou `res.status(204).end()` sem enviar mensagem.
-
-Se quiser enviar mensagem, use status 200.
+- ✅ Garanta que IDs usados para agentes e casos sejam sempre UUIDs válidos, gerados pelo servidor.  
+- ✅ Finalize as respostas HTTP corretamente, especialmente nos métodos DELETE (use `res.status(204).end()`).  
+- ✅ Centralize atualização e deleção no repository para manter o array consistente.  
+- ✅ Implemente as funções de validação de datas (`isValidDate`, `isFutureDate`).  
+- ✅ Avance na implementação dos filtros bônus para casos e agentes (status, agente responsável, ordenação).  
+- ✅ Continue mantendo a organização do projeto conforme a arquitetura modular.  
 
 ---
 
-### 6. Falta de Retorno com `return` Após Envio de Resposta
+Gabri, você está no caminho certo! Seu código mostra que você entendeu os conceitos básicos de API REST e Express, e já está aplicando boas práticas. Com esses ajustes que discutimos, sua API vai ficar muito mais robusta e alinhada com o que se espera de uma aplicação profissional. 💪🚓
 
-Em vários pontos, você faz:
-
-```js
-if (!agenteProcurado) {
-  res.status(404).send(`Agente com id:${id} não encontrado.`);
-}
-res.send(agenteProcurado);
-```
-
-Aqui, se o agente não for encontrado, você envia o 404, mas o código continua e tenta enviar a resposta de novo, causando erro de "headers já enviados".
-
-**Como corrigir?**
-
-Coloque um `return` para interromper o fluxo após enviar a resposta:
-
-```js
-if (!agenteProcurado) {
-  return res.status(404).send(`Agente com id:${id} não encontrado.`);
-}
-res.send(agenteProcurado);
-```
-
-Isso deve ser aplicado em todos os controllers que retornam erros para evitar esse problema.
+Continue firme, aproveite os recursos que te indiquei para aprofundar seus conhecimentos e não hesite em me chamar para te ajudar a destravar qualquer ponto! Você consegue! 🌟
 
 ---
 
-### 7. Manipulação do Array no Repositório ao Deletar
-
-No seu `deleteById` dos repositories, você faz:
-
-```js
-if(index == -1)
-    return -1;
-agentes = agentes.filter((agente) =>(agente.id != id));
-```
-
-Porém, você não está retornando o índice quando a exclusão ocorre, o que pode causar problemas no controller que depende do retorno para saber se deletou.
-
-**Sugestão:**
-
-Retorne o índice quando a exclusão for feita:
-
-```js
-if (index === -1) return -1;
-agentes = agentes.filter(agente => agente.id !== id);
-return index;
-```
+Um abraço de Code Buddy,  
+Sempre aqui para te ajudar! 🤖❤️
 
 ---
 
-### 8. Filtros, Ordenação e Mensagens de Erro Personalizadas (Extras)
+### Links úteis para você revisar e aprender mais:
 
-Você tentou implementar algumas funcionalidades extras, mas elas ainda não estão funcionando corretamente. Isso é totalmente compreensível, pois são desafios mais avançados! Continue tentando, pois são diferenciais importantes.
-
-Para te ajudar a avançar nessa parte, recomendo este vídeo que explica como manipular arrays e filtros em JavaScript:  
-▶️ [Manipulação de Arrays em JavaScript](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI)
-
-E para entender melhor como montar mensagens de erro personalizadas e tratamento de erros, este artigo da MDN é muito útil:  
-📚 [Status 400 - Bad Request](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)
-
----
-
-## Resumo dos Principais Pontos para Focar 🔍
-
-- [ ] Ajustar a estrutura do projeto para incluir `docs/swagger.js` e usar o `utils/errorHandler.js` para centralizar erros.  
-- [ ] Validar o formato e a data de incorporação dos agentes para evitar datas inválidas ou futuras.  
-- [ ] Proteger o campo `id` para não ser alterado via PUT ou PATCH nos agentes e casos.  
-- [ ] Validar se o `agente_id` informado em casos realmente existe antes de criar ou atualizar um caso.  
-- [ ] Corrigir o uso do status 204 para não enviar corpo na resposta DELETE.  
-- [ ] Sempre usar `return` após enviar uma resposta para evitar erros de múltiplos envios.  
-- [ ] Ajustar os métodos `deleteById` para retornarem corretamente o índice da exclusão.  
-- [ ] Continuar investindo em filtros, ordenação e mensagens de erro personalizadas para incrementar sua API.
+- Fundamentos Express.js e API REST: https://youtu.be/RSZHvQomeKE  
+- Arquitetura MVC em Node.js: https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
+- Manipulação de arrays em JavaScript: https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI  
+- Validação e tratamento de erros HTTP:  
+  - 400 Bad Request: https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
+  - 404 Not Found: https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
 
 ---
 
-Gabri, você está no caminho certo! Seu código já mostra uma boa compreensão dos conceitos básicos de APIs REST com Node.js e Express. Corrigindo esses pontos, sua API vai ficar muito mais robusta e profissional. Continue praticando, revisando e explorando esses conceitos — você vai longe! 🚀💪
-
-Se precisar de ajuda para entender mais sobre rotas, validação ou manipulação de arrays, não hesite em voltar aqui para conversar! Estou torcendo pelo seu sucesso! 🕵️‍♀️✨
-
----
-
-**Recursos recomendados para revisar e aprofundar:**
-
-- [Arquitetura MVC em Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)  
-- [Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)  
-- [Manipulação de Arrays em JavaScript](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI)  
-- [Status 400 - Bad Request (MDN)](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
-- [Express.js Routing (Documentação Oficial)](https://expressjs.com/pt-br/guide/routing.html)  
-
----
-
-Continue firme, Gabri! Seu esforço e dedicação vão transformar seu código em uma API de primeira! 🚓💙
-
-Abraço do seu Code Buddy! 🤖✨
+Boa codada e até a próxima revisão! 🚀✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
