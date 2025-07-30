@@ -3,13 +3,17 @@ import { findById, deleteById, save, findAll } from '../repositories/agentesRepo
 
 export const criarAgente = (req, res) => {
     const agente = req.body;
-    if(!req.body.nome || !req.body.dataDeIncorporacao || !req.body.cargo) {
-        res.status(400).send('Dados inválidos.');
+    if(!req.body.nome || !req.body.dataDeIncorporacao || !req.body.cargo  ) {
+        return res.status(400).send('Dados inválidos.');
     }
-    else{
-        const AgenteComId = save(uuidv4(), agente);
-        res.status(201).json(AgenteComId);
+
+    if (!isValidDate(agente.dataDeIncorporacao) || isFutureDate(agente.dataDeIncorporacao)) {
+        return res.status(400).send("Data de incorporação inválida ou no futuro.");
     }
+
+    const AgenteComId = save(uuidv4(), agente);
+    res.status(201).json(AgenteComId);
+    
 }
 
 export const acharAgente = (req, res) => {
@@ -20,7 +24,7 @@ export const acharAgentePorId = (req, res) => {
     const { id } = req.params; 
     const agenteProcurado = findById(id);
     if(!agenteProcurado) {
-        res.status(404).send(`Agente com id:${id} não encontrado.`);
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
     }
     res.send(agenteProcurado);
 }
@@ -30,9 +34,9 @@ export const deletarAgente = (req, res) => {
     const index = deleteById(id);
 
     if(index == -1) {
-        res.status(404).send(`Agente com id:${id} não encontrado.`);
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
     }
-    res.status(204).send(`Agente com id:${id} deletado.`);
+    res.status(204);
 }
 
 export const atualizarTodosOsAtributosDoAgente = (req, res) => {
@@ -50,6 +54,10 @@ export const atualizarTodosOsAtributosDoAgente = (req, res) => {
         return res.status(404).send(`Agente com id:${id} não encontrado.`);
     }
 
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do agente.");
+    }
+
     agente.nome = nome;
     agente.dataDeIncorporacao = dataDeIncorporacao;
     agente.cargo = cargo;
@@ -64,7 +72,10 @@ export const atualizarAtributosDoAgente = (req, res) => {
     const agente = findById(id);
 
     if (!agente) {
-        res.status(404).send(`Agente com id:${id} não encontrado.`);
+        return res.status(404).send(`Agente com id:${id} não encontrado.`);
+    }
+    if (req.body.id) {
+        return res.status(400).send("Não é permitido alterar o ID do agente.");
     }
 
     if (nome) {agente.nome = nome;}

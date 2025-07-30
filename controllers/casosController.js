@@ -1,19 +1,24 @@
 import {v4 as uuidv4} from 'uuid';
 import {  findById, deleteById, save, findAll } from '../repositories/casosRepository.js'
+import { findById as findAgenteById} from '../repositories/agentesRepository.js'
 
 export const criarCaso = (req, res) => {
     const caso = req.body;
     if(!req.body.titulo || !req.body.descricao || !req.body.agente_id) {
-        res.status(400).send('Dados inválidos.');
+        return res.status(400).send('Dados inválidos.');
+    }
+
+    if(!findAgenteById(req.body.agente_id)) {
+        return res.status(400).send('Id do agente inválido.');
     }
 
     if(!(req.body.status === 'aberto' || req.body.status === 'solucionado')) {
-        res.status(400).send('Status inválido. Use aberto ou solucionado.');
+        return res.status(400).send('Status inválido. Use aberto ou solucionado.');
     }
-    else{
-        const casoComId = save(uuidv4(), caso);
-        res.status(201).json(casoComId);
-    }
+
+    const casoComId = save(uuidv4(), caso);
+    res.status(201).json(casoComId);
+    
 }
 
 export const acharCaso = (req, res) => {
@@ -24,7 +29,7 @@ export const acharCasoPorId = (req, res) => {
     const { id } = req.params; 
     const casoProcurado = findById(id);
     if(!casoProcurado) {
-        res.status(404).send(`Caso com id:${id} não encontrado.`);
+        return res.status(404).send(`Caso com id:${id} não encontrado.`);
     }
     res.send(casoProcurado);
 }
@@ -34,7 +39,7 @@ export const deletarCaso = (req, res) => {
     const index = deleteById(id);
 
     if(index == -1) {
-        res.status(404).send(`Caso com id:${id} não encontrado.`);
+        return res.status(404).send(`Caso com id:${id} não encontrado.`);
     }
     res.status(204).send(`Caso com id:${id} deletado.`);
 }
@@ -72,7 +77,7 @@ export const atualizarAtributosDoCaso = (req, res) => {
     const caso = findById(id);
 
     if (!caso) {
-        res.status(404).send(`Caso com id:${id} não encontrado.`);
+        return res.status(404).send(`Caso com id:${id} não encontrado.`);
     }
 
     if (titulo) caso.titulo = titulo;

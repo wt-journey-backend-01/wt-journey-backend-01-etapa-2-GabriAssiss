@@ -16,6 +16,7 @@ export const deleteById = (id) => {
     if(index == -1)
         return -1;
     casos = casos.filter((caso) =>(caso.id != id));
+    return index;
 }
 
 export const findAll = () => {

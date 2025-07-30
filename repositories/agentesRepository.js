@@ -16,6 +16,7 @@ export const deleteById = (id) => {
     if(index == -1)
         return -1;
     agentes = agentes.filter((agente) =>(agente.id != id));
+    return index;
 }
 
 export const findAll = () => {
